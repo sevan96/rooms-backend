@@ -1,3 +1,5 @@
+import { Logger } from '@nestjs/common';
+
 export interface CalendarEvent {
   title: string;
   description: string;
@@ -20,7 +22,7 @@ export class CalendarLinksUtil {
       details: event.description,
       ...(event.location && { location: event.location }),
     });
-    
+
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
   }
 
@@ -37,7 +39,7 @@ export class CalendarLinksUtil {
       body: event.description,
       ...(event.location && { location: event.location }),
     });
-    
+
     return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
   }
 
@@ -52,11 +54,11 @@ export class CalendarLinksUtil {
     const startDate = formatDate(event.startDate);
     const endDate = formatDate(event.endDate);
     const now = formatDate(new Date());
-    
+
     // Générer un UID unique pour l'événement
     const uid = `${now}-${Math.random().toString(36).substring(2, 15)}@rooms-backend`;
 
-    let icsContent = [
+    const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
       'PRODID:-//Rooms Backend//Meeting Calendar//EN',
@@ -66,7 +68,7 @@ export class CalendarLinksUtil {
       `DTEND:${endDate}`,
       `DTSTAMP:${now}`,
       `SUMMARY:${event.title}`,
-      `DESCRIPTION:${event.description.replace(/\n/g, '\\n')}`,
+      `DESCRIPTION:${event.description !== undefined ? event.description.replace(/\n/g, '\\n') : ''}`,
     ];
 
     if (event.location) {
@@ -77,7 +79,7 @@ export class CalendarLinksUtil {
       'STATUS:CONFIRMED',
       'SEQUENCE:0',
       'END:VEVENT',
-      'END:VCALENDAR'
+      'END:VCALENDAR',
     );
 
     return icsContent.join('\r\n');
@@ -88,7 +90,10 @@ export class CalendarLinksUtil {
    */
   static generateICSDownloadLink(meetingId: string): string {
     // Utiliser l'endpoint REST pour servir le fichier ICS
-    return `/calendar/ics/${meetingId}`;
+    Logger.log(
+      `https://rooms-backend-2shj.onrender.com/calendar/ics/${meetingId}`,
+    );
+    return `https://rooms-backend-2shj.onrender.com/calendar/ics/${meetingId}`;
   }
 
   /**

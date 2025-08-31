@@ -9,32 +9,36 @@ export class CalendarController {
   constructor(private readonly calendarService: CalendarService) {}
 
   @Get('ics/:meetingId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Télécharger un fichier ICS pour une réunion',
-    description: 'Génère et télécharge un fichier ICS pour ajouter la réunion à un calendrier'
+    description:
+      'Génère et télécharge un fichier ICS pour ajouter la réunion à un calendrier',
   })
-  @ApiParam({ 
-    name: 'meetingId', 
-    description: 'Identifiant unique de la réunion' 
+  @ApiParam({
+    name: 'meetingId',
+    description: 'Identifiant unique de la réunion',
   })
   async downloadICS(
     @Param('meetingId') meetingId: string,
-    @Res() res: Response
+    @Res() res: Response,
   ): Promise<void> {
     try {
-      const icsContent = await this.calendarService.generateICSForMeeting(meetingId);
-      
+      const icsContent =
+        await this.calendarService.generateICSForMeeting(meetingId);
+
       res.set({
         'Content-Type': 'text/calendar; charset=utf-8',
         'Content-Disposition': `attachment; filename="reunion-${meetingId}.ics"`,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        Pragma: 'no-cache',
+        Expires: '0',
       });
-      
+
       res.send(icsContent);
     } catch (error) {
-      throw new NotFoundException('Réunion non trouvée ou impossible de générer le fichier ICS');
+      throw new NotFoundException(
+        'Réunion non trouvée ou impossible de générer le fichier ICS',
+      );
     }
   }
 }

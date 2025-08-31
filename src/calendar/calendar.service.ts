@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Meeting } from '../meeting/meeting.schema';
 import { Room } from '../room/room.schema';
-import { CalendarLinksUtil, CalendarEvent } from '../meeting/utils/calendar-links.util';
+import {
+  CalendarLinksUtil,
+  CalendarEvent,
+} from '../meeting/utils/calendar-links.util';
 
 @Injectable()
 export class CalendarService {
