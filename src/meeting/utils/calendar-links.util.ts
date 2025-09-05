@@ -106,6 +106,13 @@ export class CalendarLinksUtil {
   }
 
   /**
+   * Génère un lien de consultation des détails de l'événement (méthode legacy avec data URL)
+   */
+  static generateEventDetailsLink(meetingId: string): string {
+    return `https://rooms-gemini.vercel.app/#/meeting/${meetingId}`;
+  }
+
+  /**
    * Formate une date pour Google Calendar (YYYYMMDDTHHMMSSZ)
    */
   private static formatDateForGoogle(date: Date): string {

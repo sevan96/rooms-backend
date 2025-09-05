@@ -102,6 +102,9 @@ export class EmailService {
         icsDownloadLink: CalendarLinksUtil.generateICSDownloadLink(
           meeting._id.toString(),
         ),
+        eventDetailsLink: CalendarLinksUtil.generateEventDetailsLink(
+          meeting._id.toString(),
+        ),
       };
 
       await this.sendEmail({
