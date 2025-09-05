@@ -149,4 +149,12 @@ export class MeetingController {
   remove(@Param('id') id: string) {
     return this.meetingService.remove(id);
   }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Modifier une réunion' })
+  @ApiResponse({ status: 200, description: 'Réunion modifiée avec succès' })
+  @ApiResponse({ status: 404, description: 'Réunion non trouvée' })
+  update(@Param('id') id: string, @Body() createMeetingDto: CreateMeetingDto) {
+    return this.meetingService.update(id, createMeetingDto);
+  }
 }

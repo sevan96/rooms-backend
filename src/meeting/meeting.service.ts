@@ -189,6 +189,64 @@ export class MeetingService {
     }
   }
 
+  async update(
+    id: string,
+    createMeetingDto: CreateMeetingDto,
+  ): Promise<Meeting> {
+    const meeting = await this.meetingModel.findByIdAndUpdate(id).exec();
+    if (!meeting) {
+      throw new NotFoundException('Réunion non trouvée');
+    }
+
+    // Valider les dates
+    const startDate = new Date(createMeetingDto.start_date);
+    const endDate = new Date(createMeetingDto.end_date);
+
+    if (startDate >= endDate) {
+      throw new BadRequestException(
+        'La date de début doit être antérieure à la date de fin',
+      );
+    }
+
+    if (startDate < new Date()) {
+      throw new BadRequestException(
+        'La date de début ne peut pas être dans le passé',
+      );
+    }
+
+    // Vérifier que la salle existe et est disponible
+    const room = await this.roomService.findOne(meeting.room as any);
+    if (!room.available) {
+      throw new BadRequestException("La salle n'est pas disponible");
+    }
+
+    const conflicts = await this.findConflictingMeetings(
+      meeting.room as any,
+      startDate,
+      endDate,
+    );
+
+    if (conflicts.length > 0) {
+      if (conflicts.some((conflict) => JSON.stringify(conflict._id) !== id)) {
+        throw new ConflictException(
+          'Il existe déjà des réunions programmées sur ce créneau',
+        );
+      }
+    }
+
+    meeting.start_date = startDate;
+    meeting.end_date = endDate;
+
+    const updatedMeeting = await meeting.save();
+
+    // Envoyer les emails de notification (en arrière-plan pour ne pas bloquer la réponse)
+    this.sendMeetingNotifications(updatedMeeting, room.name).catch((error) => {
+      console.error('Failed to send meeting notifications:', error);
+    });
+
+    return updatedMeeting;
+  }
+
   private async findConflictingMeetings(
     roomId: string,
     startDate: Date,
