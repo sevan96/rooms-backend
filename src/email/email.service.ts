@@ -97,9 +97,8 @@ export class EmailService {
         accessCode: meeting.access_code,
         googleCalendarLink:
           CalendarLinksUtil.generateGoogleCalendarLink(calendarEvent),
-        outlookCalendarLink: CalendarLinksUtil.generateICSDownloadLink(
-          meeting._id.toString(),
-        ),
+        outlookCalendarLink:
+          CalendarLinksUtil.generateOutlookCalendarLink(calendarEvent),
         icsDownloadLink: CalendarLinksUtil.generateICSDownloadLink(
           meeting._id.toString(),
         ),
@@ -148,9 +147,8 @@ export class EmailService {
         organizerEmail: meeting.organizer_email,
         googleCalendarLink:
           CalendarLinksUtil.generateGoogleCalendarLink(calendarEvent),
-        outlookCalendarLink: CalendarLinksUtil.generateICSDownloadLink(
-          meeting._id.toString(),
-        ),
+        outlookCalendarLink:
+          CalendarLinksUtil.generateOutlookCalendarLink(calendarEvent),
         icsDownloadLink: CalendarLinksUtil.generateICSDownloadLink(
           meeting._id.toString(),
         ),

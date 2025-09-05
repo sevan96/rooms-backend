@@ -40,7 +40,7 @@ export class CalendarLinksUtil {
       ...(event.location && { location: event.location }),
     });
 
-    return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+    return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
   }
 
   /**
