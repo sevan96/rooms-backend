@@ -193,10 +193,12 @@ export class MeetingService {
     id: string,
     createMeetingDto: CreateMeetingDto,
   ): Promise<Meeting> {
-    const meeting = await this.meetingModel.findByIdAndUpdate(id).exec();
+    const meeting = await this.meetingModel.findById(id).exec();
     if (!meeting) {
       throw new NotFoundException('Réunion non trouvée');
     }
+
+    const oldMeeting = meeting.toObject();
 
     // Valider les dates
     const startDate = new Date(createMeetingDto.start_date);
@@ -234,13 +236,25 @@ export class MeetingService {
       }
     }
 
+    meeting.title = createMeetingDto.title ?? meeting.title;
+    meeting.description = createMeetingDto.description ?? meeting.description;
+    meeting.attendees = createMeetingDto.attendees ?? meeting.attendees;
+    meeting.organizer_email =
+      createMeetingDto.organizer_email ?? meeting.organizer_email;
+    meeting.organizer_full_name =
+      createMeetingDto.organizer_full_name ?? meeting.organizer_full_name;
     meeting.start_date = startDate;
+    meeting.end_date = endDate;
     meeting.end_date = endDate;
 
     const updatedMeeting = await meeting.save();
 
     // Envoyer les emails de notification (en arrière-plan pour ne pas bloquer la réponse)
-    this.sendMeetingNotifications(updatedMeeting, room.name).catch((error) => {
+    this.sendMeetingUpdateNotifications(
+      oldMeeting,
+      updatedMeeting,
+      room.name,
+    ).catch((error) => {
       console.error('Failed to send meeting notifications:', error);
     });
 
@@ -409,6 +423,33 @@ export class MeetingService {
       await this.emailService.sendCancellationNotification(meeting, roomName);
     } catch (error) {
       console.error('Error sending cancellation notifications:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Envoyer les notifications email pour une modification de réunion
+   */
+  private async sendMeetingUpdateNotifications(
+    oldMeeting: Meeting,
+    meeting: Meeting,
+    roomName: string,
+  ): Promise<void> {
+    try {
+      // Envoyer l'email à l'organisateur
+      await this.emailService.sendOrganizerUpdateNotification(
+        meeting,
+        roomName,
+      );
+
+      // Envoyer les invitations aux participants
+      await this.emailService.sendUpdateNotification(
+        oldMeeting,
+        meeting,
+        roomName,
+      );
+    } catch (error) {
+      console.error('Error sending meeting notifications:', error);
       throw error;
     }
   }
