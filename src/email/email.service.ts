@@ -263,7 +263,7 @@ export class EmailService {
 
       await this.sendEmail({
         to: meeting.organizer_email,
-        subject: `Moification de réunion : ${meeting.title}`,
+        subject: `Modification de réunion : ${meeting.title}`,
         template: 'organizer-meeting-update',
         data: templateData,
       });
