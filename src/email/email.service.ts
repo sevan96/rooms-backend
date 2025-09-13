@@ -227,6 +227,123 @@ export class EmailService {
     }
   }
 
+  async sendOrganizerUpdateNotification(
+    meeting: Meeting,
+    roomName: string,
+  ): Promise<void> {
+    try {
+      const calendarEvent: CalendarEvent = {
+        title: meeting.title,
+        description: meeting.description,
+        startDate: meeting.start_date,
+        endDate: meeting.end_date,
+        location: roomName,
+      };
+
+      const templateData = {
+        organizerName: meeting.organizer_full_name,
+        title: meeting.title,
+        description: meeting.description,
+        startDate: this.formatDate(meeting.start_date),
+        endDate: this.formatDate(meeting.end_date),
+        roomName: roomName,
+        attendeesCount: meeting.attendees.length,
+        accessCode: meeting.access_code,
+        googleCalendarLink:
+          CalendarLinksUtil.generateGoogleCalendarLink(calendarEvent),
+        outlookCalendarLink:
+          CalendarLinksUtil.generateOutlookCalendarLink(calendarEvent),
+        icsDownloadLink: CalendarLinksUtil.generateICSDownloadLink(
+          meeting._id.toString(),
+        ),
+        eventDetailsLink: CalendarLinksUtil.generateEventDetailsLink(
+          meeting._id.toString(),
+        ),
+      };
+
+      await this.sendEmail({
+        to: meeting.organizer_email,
+        subject: `Moification de réunion : ${meeting.title}`,
+        template: 'organizer-meeting-update',
+        data: templateData,
+      });
+
+      this.logger.log(
+        `Organizer notification sent to ${meeting.organizer_email}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send organizer notification: ${error.message}`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async sendUpdateNotification(
+    oldMeeting: Meeting,
+    meeting: Meeting,
+    roomName: string,
+  ): Promise<void> {
+    try {
+      const calendarEvent: CalendarEvent = {
+        title: meeting.title,
+        description: meeting.description,
+        startDate: meeting.start_date,
+        endDate: meeting.end_date,
+        location: roomName,
+      };
+
+      const templateData = {
+        title: oldMeeting.title,
+        description: oldMeeting.description,
+        startDate: this.formatDate(oldMeeting.start_date),
+        endDate: this.formatDate(oldMeeting.end_date),
+        updatedTitle: meeting.title,
+        upatedDescription: meeting.description,
+        upatedStartDate: this.formatDate(meeting.start_date),
+        updatedEndDate: this.formatDate(meeting.end_date),
+        roomName: roomName,
+        attendeesCount: meeting.attendees.length,
+        organizerName: meeting.organizer_full_name,
+        organizerEmail: meeting.organizer_email,
+        googleCalendarLink:
+          CalendarLinksUtil.generateGoogleCalendarLink(calendarEvent),
+        outlookCalendarLink:
+          CalendarLinksUtil.generateOutlookCalendarLink(calendarEvent),
+        icsDownloadLink: CalendarLinksUtil.generateICSDownloadLink(
+          meeting._id.toString(),
+        ),
+      };
+
+      // Envoyer à tous les participants sauf l'organisateur
+      const attendeesToNotify = meeting.attendees.filter(
+        (attendee) => attendee !== meeting.organizer_email,
+      );
+
+      const emailPromises = attendeesToNotify.map((attendee) =>
+        this.sendEmail({
+          to: attendee,
+          subject: `Modification de réunion : ${meeting.title}`,
+          template: 'meeting-updated',
+          data: templateData,
+        }),
+      );
+
+      await Promise.all(emailPromises);
+
+      this.logger.log(
+        `Attendee invitations sent to ${attendeesToNotify.length} participants`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send attendee invitations: ${error.message}`,
+        error,
+      );
+      throw error;
+    }
+  }
+
   private async sendEmail(emailData: EmailData): Promise<void> {
     try {
       const template = await this.loadTemplate(emailData.template);
