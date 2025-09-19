@@ -222,11 +222,13 @@ export class MeetingService {
       throw new BadRequestException("La salle n'est pas disponible");
     }
 
-    const conflicts = await this.findConflictingMeetings(
-      meeting.room as any,
-      startDate,
-      endDate,
-    );
+    const conflicts =
+      await this.findConflictingMeetingsThatDoNotConcernThisMeeting(
+        meeting.room as any,
+        id,
+        startDate,
+        endDate,
+      );
 
     if (conflicts.length > 0) {
       if (conflicts.some((conflict) => JSON.stringify(conflict._id) !== id)) {
@@ -283,6 +285,34 @@ export class MeetingService {
           },
         ],
       })
+      .exec();
+  }
+
+  private async findConflictingMeetingsThatDoNotConcernThisMeeting(
+    roomId: string,
+    meetingId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Meeting[]> {
+    return this.meetingModel
+      .find({
+        room: roomId,
+        status: MeetingStatus.SCHEDULED,
+        $or: [
+          {
+            start_date: { $gte: startDate, $lt: endDate },
+          },
+          {
+            end_date: { $gt: startDate, $lte: endDate },
+          },
+          {
+            start_date: { $lte: startDate },
+            end_date: { $gte: endDate },
+          },
+        ],
+      })
+      .where('_id')
+      .ne(meetingId)
       .exec();
   }
 
