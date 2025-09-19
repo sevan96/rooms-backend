@@ -381,6 +381,16 @@ export class MeetingService {
   }
 
   /**
+   * Obtenir les informations d'une réunion en utilisant un code d'accès unique
+   */
+  async getByAccessCode(accessCode: string): Promise<Meeting> {
+    return this.meetingModel
+      .findOne({ access_code: accessCode })
+      .populate('room')
+      .exec();
+  }
+
+  /**
    * Générer un code d'accès unique pour une réunion
    */
   private generateAccessCode(): string {

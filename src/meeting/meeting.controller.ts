@@ -157,4 +157,12 @@ export class MeetingController {
   update(@Param('id') id: string, @Body() createMeetingDto: CreateMeetingDto) {
     return this.meetingService.update(id, createMeetingDto);
   }
+
+  @Get('/by-access-code/:accessCode')
+  @ApiOperation({ summary: 'Obtenir une réunion par code d’accès' })
+  @ApiResponse({ status: 200, description: 'Réunion trouvée' })
+  @ApiResponse({ status: 404, description: 'Réunion non trouvée' })
+  getByAccessCode(@Param('accessCode') accessCode: string) {
+    return this.meetingService.getByAccessCode(accessCode);
+  }
 }
