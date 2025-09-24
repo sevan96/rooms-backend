@@ -375,7 +375,7 @@ export class EmailService {
         this.sendEmail({
           to: attendee,
           subject: `ANNULÉE : ${meeting.title}`,
-          template: 'meeting-cancelled',
+          template: 'attendee-retired',
           data: templateData,
         }),
       );
