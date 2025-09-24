@@ -488,6 +488,19 @@ export class MeetingService {
         meeting,
         roomName,
       );
+
+      // Envoyer les notifications aux participants retirés
+      await this.emailService.sendRetiredAttendeesNotification(
+        oldMeeting,
+        meeting,
+        roomName,
+      );
+      // Envoyer les notifications aux participants ajoutés
+      await this.emailService.sendNewAttendeeInvitations(
+        oldMeeting,
+        meeting,
+        roomName,
+      );
     } catch (error) {
       console.error('Error sending meeting notifications:', error);
       throw error;

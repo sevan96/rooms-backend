@@ -317,15 +317,125 @@ export class EmailService {
       };
 
       // Envoyer à tous les participants sauf l'organisateur
-      const attendeesToNotify = meeting.attendees.filter(
-        (attendee) => attendee !== meeting.organizer_email,
+      const attendeesToNotify = meeting.attendees.filter((attendee) =>
+        oldMeeting.attendees.includes(attendee),
       );
+      // const attendeesToNotify = meeting.attendees.filter(
+      //   (attendee) => attendee !== meeting.organizer_email,
+      // );
 
       const emailPromises = attendeesToNotify.map((attendee) =>
         this.sendEmail({
           to: attendee,
           subject: `Modification de réunion : ${meeting.title}`,
           template: 'meeting-updated',
+          data: templateData,
+        }),
+      );
+
+      await Promise.all(emailPromises);
+
+      this.logger.log(
+        `Attendee invitations sent to ${attendeesToNotify.length} participants`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send attendee invitations: ${error.message}`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async sendRetiredAttendeesNotification(
+    oldMeeting: Meeting,
+    meeting: Meeting,
+    roomName: string,
+  ): Promise<void> {
+    try {
+      const templateData = {
+        title: meeting.title,
+        description: meeting.description,
+        startDate: this.formatDate(meeting.start_date),
+        endDate: this.formatDate(meeting.end_date),
+        roomName: roomName,
+        organizerName: meeting.organizer_full_name,
+        organizerEmail: meeting.organizer_email,
+        // cancelledBy: meeting.cancelled_by,
+        // cancelledAt: this.formatDate(meeting.cancelled_at),
+        // cancelledReason: meeting.cancelled_reason,
+      };
+
+      // Envoyer les notifications aux participants retirés
+      const attendeesToNotify = oldMeeting.attendees.filter(
+        (attendee) => !meeting.attendees.includes(attendee),
+      );
+
+      const emailPromises = attendeesToNotify.map((attendee) =>
+        this.sendEmail({
+          to: attendee,
+          subject: `ANNULÉE : ${meeting.title}`,
+          template: 'meeting-cancelled',
+          data: templateData,
+        }),
+      );
+
+      await Promise.all(emailPromises);
+
+      this.logger.log(
+        `Cancellation notifications sent to ${meeting.attendees.length} participants`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send cancellation notifications: ${error.message}`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async sendNewAttendeeInvitations(
+    oldMeeting: Meeting,
+    meeting: Meeting,
+    roomName: string,
+  ): Promise<void> {
+    try {
+      const calendarEvent: CalendarEvent = {
+        title: meeting.title,
+        description: meeting.description,
+        startDate: meeting.start_date,
+        endDate: meeting.end_date,
+        location: roomName,
+      };
+
+      const templateData = {
+        title: meeting.title,
+        description: meeting.description,
+        startDate: this.formatDate(meeting.start_date),
+        endDate: this.formatDate(meeting.end_date),
+        roomName: roomName,
+        attendeesCount: meeting.attendees.length,
+        organizerName: meeting.organizer_full_name,
+        organizerEmail: meeting.organizer_email,
+        googleCalendarLink:
+          CalendarLinksUtil.generateGoogleCalendarLink(calendarEvent),
+        outlookCalendarLink:
+          CalendarLinksUtil.generateOutlookCalendarLink(calendarEvent),
+        icsDownloadLink: CalendarLinksUtil.generateICSDownloadLink(
+          meeting._id.toString(),
+        ),
+      };
+
+      // Envoyer à tous les participants sauf l'organisateur
+      const attendeesToNotify = meeting.attendees.filter(
+        (attendee) => !oldMeeting.attendees.includes(attendee),
+      );
+
+      const emailPromises = attendeesToNotify.map((attendee) =>
+        this.sendEmail({
+          to: attendee,
+          subject: `Invitation : ${meeting.title}`,
+          template: 'attendee-invitation',
           data: templateData,
         }),
       );
